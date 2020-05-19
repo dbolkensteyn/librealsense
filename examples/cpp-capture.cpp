@@ -94,6 +94,7 @@ int main(int argc, char * argv[]) try
     });
     glfwMakeContextCurrent(win);
 
+    const rs::intrinsics depth_intrin = dev.get_stream_intrinsics(rs::stream::depth);
     while (!glfwWindowShouldClose(win))
     {
         // Wait for new images
@@ -105,6 +106,41 @@ int main(int argc, char * argv[]) try
         glfwGetFramebufferSize(win, &w, &h);
         glViewport(0, 0, w, h);
         glClear(GL_COLOR_BUFFER_BIT);
+
+	// Process depth data
+	std::cout << "Depth format: " << dev.get_stream_format(rs::stream::depth)  << std::endl;
+        auto depth_data = reinterpret_cast<const uint16_t*>(dev.get_frame_data(rs::stream::depth));
+	auto width = dev.get_stream_width(rs::stream::depth);
+	auto height = dev.get_stream_height(rs::stream::depth);
+
+        unsigned long long v = 0;
+	unsigned long long c = 0;
+	auto points = depth_data;
+	std::cout << width << " vs " << height << std::endl;
+	std::cout << depth_intrin.width << " vs " << depth_intrin.height << ", depth scale = " << dev.get_depth_scale() << std::endl;
+	std::vector<float> fpts;
+	for (int y = 0; y < height; y++) {
+		for (int x = 0; x < width; x++) {
+			if (*points > 300 && *points < 3000) {
+				const rs::float3 point = depth_intrin.deproject({static_cast<float>(x),static_cast<float>(y)}, *points);
+
+				if (point.y < 0) {
+					// Point at or above the camera line
+					fpts.push_back( *points);
+				}
+			}
+			points++;
+		}
+	}
+
+	if (fpts.size() > 0) {
+		// 95th percentile
+		std::nth_element(fpts.begin(), fpts.begin() + fpts.size()*0.05, fpts.end());
+		auto cutoff = fpts[fpts.size()*0.05];
+		std::cout << "Cutoff: " << cutoff << " # points: " << fpts.size() << std::endl;
+	} else {
+		std::cout << "No depth data!" << std::endl;
+	}
 
         // Draw the images
         glPushMatrix();

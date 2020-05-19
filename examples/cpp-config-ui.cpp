@@ -269,7 +269,7 @@ struct user_data
 void show_message(GLFWwindow* curr_window, const std::string& title, const std::string& message)
 {
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
-    glfwWindowHint(GLFW_FLOATING, GL_TRUE);
+    glfwWindowHint(0 /*Dinesh: GLFW_FLOATING*/, GL_TRUE);
 
     int xpos, ypos;
     glfwGetWindowPos(curr_window, &xpos, &ypos);
