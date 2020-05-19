@@ -108,7 +108,7 @@ int main(int argc, char * argv[]) try
         glClear(GL_COLOR_BUFFER_BIT);
 
 	// Process depth data
-	std::cout << "Depth format: " << dev.get_stream_format(rs::stream::depth)  << std::endl;
+	//std::cout << "Depth format: " << dev.get_stream_format(rs::stream::depth)  << std::endl;
         auto depth_data = reinterpret_cast<const uint16_t*>(dev.get_frame_data(rs::stream::depth));
 	auto width = dev.get_stream_width(rs::stream::depth);
 	auto height = dev.get_stream_height(rs::stream::depth);
@@ -116,8 +116,8 @@ int main(int argc, char * argv[]) try
         unsigned long long v = 0;
 	unsigned long long c = 0;
 	auto points = depth_data;
-	std::cout << width << " vs " << height << std::endl;
-	std::cout << depth_intrin.width << " vs " << depth_intrin.height << ", depth scale = " << dev.get_depth_scale() << std::endl;
+	//std::cout << width << " vs " << height << std::endl;
+	//std::cout << depth_intrin.width << " vs " << depth_intrin.height << ", depth scale = " << dev.get_depth_scale() << std::endl;
 	std::vector<float> fpts;
 	for (int y = 0; y < height; y++) {
 		for (int x = 0; x < width; x++) {
@@ -137,7 +137,13 @@ int main(int argc, char * argv[]) try
 		// 95th percentile
 		std::nth_element(fpts.begin(), fpts.begin() + fpts.size()*0.05, fpts.end());
 		auto cutoff = fpts[fpts.size()*0.05];
-		std::cout << "Cutoff: " << cutoff << " # points: " << fpts.size() << std::endl;
+		auto cutoffCount = 0;
+		for (int i = 0; i < fpts.size(); i++) {
+			if (fpts[i] >= cutoff*(1-0.1) && fpts[i] <= cutoff*(1+0.1)) {
+				cutoffCount++;
+			}
+		}
+		std::cout << "Cutoff: " << cutoff << "\t\t# points: " << (int)((float)cutoffCount/fpts.size()*100) << "%, " << cutoffCount << "/" << fpts.size() << std::endl;
 	} else {
 		std::cout << "No depth data!" << std::endl;
 	}
